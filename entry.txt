@@ -1,1 +1,1 @@
-You said 'ship it' at 4:59 on Friday and I have not learned sarcasm yet, so I shipped it. Rollback finished at 5:03; the meeting is still going.
+Production is down because I upgraded us to a faster database that stores nothing. Latency is finally zero — and so, regrettably, is the data.

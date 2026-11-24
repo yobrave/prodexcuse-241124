@@ -1,32 +1,38 @@
-"""Ship the prod-excuse line for the hamsyh breaking-production bounty.
-
-Gate: one line, 1..180 chars, not blank. Exit non-zero when invalid.
-"""
+"""pxc2 reentry: publish the production-outage excuse line."""
 from pathlib import Path
+import json
 import os
 import sys
 
-LIMIT = 180
-REPO = Path(__file__).resolve().parent
-LINE_FILE = REPO / "entry.txt"
+BOUNTY = "u-hamsyh-the-one-line-ai-excuse-for-breaking-e53dac66"
+MAX_CHARS = 180
+NOTE = "reentry round 2: faster-database excuse"
 
 
-def measure(raw: str) -> tuple[int, bool]:
-    body = raw.strip()
-    return len(body), bool(body) and len(body) <= LIMIT
-
-
-def stage() -> dict:
-    text = LINE_FILE.read_text(encoding="utf-8").strip()
-    size, ok = measure(text)
-    if not ok:
-        raise SystemExit(f"entry rejected by gate: {size} chars")
-    target = os.environ.get("MAKEFUN_OUTPUT_DIR") or str(REPO / "output")
-    Path(target).mkdir(parents=True, exist_ok=True)
-    dest = Path(target) / "entry.txt"
-    dest.write_text(text + "\n", encoding="utf-8")
-    return {"artifact": str(dest), "chars": size, "subject": "production outage excuse"}
+def produce() -> int:
+    src = Path(__file__).resolve().parent / "entry.txt"
+    if not src.exists():
+        print(json.dumps({"verdict": "reject", "detail": "entry.txt missing"}))
+        return 2
+    raw = src.read_text(encoding="utf-8")
+    rows = [ln.strip() for ln in raw.replace("\r\n", "\n").split("\n") if ln.strip()]
+    if not rows:
+        print(json.dumps({"verdict": "reject", "detail": "entry blank"}))
+        return 2
+    line = " ".join(rows)
+    if not (1 <= len(line) <= MAX_CHARS):
+        print(json.dumps({"verdict": "reject", "detail": "entry exceeds/below limit"}))
+        return 2
+    out_dir = Path(os.environ.get("MAKEFUN_OUTPUT_DIR", "/output"))
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "entry.txt").write_text(line + "\n", encoding="utf-8", newline="\n")
+    echo = (out_dir / "entry.txt").read_text(encoding="utf-8").strip()
+    if echo != line:
+        print(json.dumps({"verdict": "reject", "detail": "echo mismatch"}))
+        return 2
+    print(json.dumps({"verdict": "accept", "bounty": BOUNTY, "note": NOTE, "chars": len(line)}))
+    return 0
 
 
 if __name__ == "__main__":
-    print(stage())
+    sys.exit(produce())
