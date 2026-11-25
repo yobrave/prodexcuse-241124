@@ -1,1 +1,1 @@
-Production is down because I upgraded us to a faster database that stores nothing. Latency is finally zero — and so, regrettably, is the data.
+I broke prod on purpose to test the rollback. The rollback is also broken. Science is complete.
